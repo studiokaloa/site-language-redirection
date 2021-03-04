@@ -29,6 +29,11 @@ class RedirectionMiddleware implements MiddlewareInterface
     protected $botPattern = '/bot|google|baidu|bing|msn|teoma|slurp|yandex/i';
 
     /**
+     * @var string
+     */
+    protected $specificPagesPattern = '/sitemap.xml|robots.txt/i';
+
+    /**
      * Adds an instance of TYPO3\CMS\Core\Http\NormalizedParams as
      * attribute to $request object
      *
@@ -48,6 +53,13 @@ class RedirectionMiddleware implements MiddlewareInterface
          * Do not redirect search engine bots.
          */
         if ($this->isBot($request)) {
+            return $handler->handle($request);
+        }
+
+        /**
+         * Do not redirect specific pages
+         */
+        if ($this->isSpecificPage($request)){
             return $handler->handle($request);
         }
 
@@ -366,5 +378,15 @@ class RedirectionMiddleware implements MiddlewareInterface
         }
 
         return is_string($userAgent) && preg_match($this->botPattern, $userAgent);
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @return bool
+     */
+    protected function isSpecificPage(ServerRequestInterface $request): bool
+    {
+        $uri = $request->getUri()->getPath();
+        return is_string($uri) && preg_match($this->specificPagesPattern, $uri);
     }
 }
